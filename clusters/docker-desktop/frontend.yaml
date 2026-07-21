@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rails-frontend
+  namespace: rails-task
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rails-frontend
+  template:
+    metadata:
+      labels:
+        app: rails-frontend
+    spec:
+      containers:
+        - name: rails-frontend
+          image: harshparmar009/rails-task-frontend:v3
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rails-frontend
+  namespace: rails-task
+spec:
+  type: NodePort
+  selector:
+    app: rails-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30081
