@@ -100,7 +100,7 @@ function App() {
   return (
     <main className="container">
       <header>
-        <h1>Rails Task Manager</h1>
+        <h1>Rails with ruby Task Manager</h1>
         <p>React frontend connected to Rails and PostgreSQL</p>
       </header>
 
