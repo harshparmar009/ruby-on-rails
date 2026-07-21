@@ -40,6 +40,12 @@ spec:
                 secretKeyRef:
                   name: postgres-secret
                   key: POSTGRES_PASSWORD
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: 6575cf6f8fc1c0036f27e841a90c3207f98043bafb4d963e471908ea12d6726798d24b6b0516fb93c14ed669784dcc78c29dd3cdf30221d2fe5e0f7d5bb95f71      
+
       containers:
         - name: rails-backend
           image: harshparmar009/rails-task-backend:v1
@@ -68,6 +74,11 @@ spec:
                 secretKeyRef:
                   name: postgres-secret
                   key: POSTGRES_PASSWORD
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: 6575cf6f8fc1c0036f27e841a90c3207f98043bafb4d963e471908ea12d6726798d24b6b0516fb93c14ed669784dcc78c29dd3cdf30221d2fe5e0f7d5bb95f71      
           readinessProbe:
             httpGet:
               path: /up

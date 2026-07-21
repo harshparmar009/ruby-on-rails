@@ -8,6 +8,7 @@ stringData:
   POSTGRES_DB: rails_api_template_production
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: postgres123
+  SECRET_KEY_BASE: 6575cf6f8fc1c0036f27e841a90c3207f98043bafb4d963e471908ea12d6726798d24b6b0516fb93c14ed669784dcc78c29dd3cdf30221d2fe5e0f7d5bb95f71
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
