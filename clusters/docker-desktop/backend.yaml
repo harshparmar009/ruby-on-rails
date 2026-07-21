@@ -44,7 +44,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
-                  key: 6575cf6f8fc1c0036f27e841a90c3207f98043bafb4d963e471908ea12d6726798d24b6b0516fb93c14ed669784dcc78c29dd3cdf30221d2fe5e0f7d5bb95f71      
+                  key: SECRET_KEY_BASE      
 
       containers:
         - name: rails-backend
@@ -78,7 +78,8 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
-                  key: 6575cf6f8fc1c0036f27e841a90c3207f98043bafb4d963e471908ea12d6726798d24b6b0516fb93c14ed669784dcc78c29dd3cdf30221d2fe5e0f7d5bb95f71      
+                  key: SECRET_KEY_BASE      
+
           readinessProbe:
             httpGet:
               path: /up
