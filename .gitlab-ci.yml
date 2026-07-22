@@ -1,63 +1,125 @@
 stages:
   - build
+  - deploy
 
 variables:
   BACKEND_IMAGE: "$CI_REGISTRY_IMAGE/backend"
   FRONTEND_IMAGE: "$CI_REGISTRY_IMAGE/frontend"
   IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
 
-  DOCKER_HOST: "tcp://docker:2375"
-  DOCKER_TLS_CERTDIR: ""
-
 default:
-  image: docker:27.5.1
-
+  image: docker:27
   services:
-    - name: docker:27.5.1-dind
+    - name: docker:27-dind
       alias: docker
-
   before_script:
-    - >
-      echo "$CI_REGISTRY_PASSWORD" |
-      docker login "$CI_REGISTRY"
-      --username "$CI_REGISTRY_USER"
-      --password-stdin
+    - docker info
+    - echo "$CI_REGISTRY_PASSWORD" |
+        docker login
+        -u "$CI_REGISTRY_USER"
+        --password-stdin
+        "$CI_REGISTRY"
 
-build-backend:
+build_backend:
   stage: build
 
   script:
-    - echo "Building Rails backend image..."
-    - >
-      docker build
-      --pull
-      --tag "$BACKEND_IMAGE:$IMAGE_TAG"
-      --tag "$BACKEND_IMAGE:latest"
-      ./rails_api_template
+    - echo "Building backend image $BACKEND_IMAGE:$IMAGE_TAG"
 
-    - echo "Pushing Rails backend image..."
+    - docker build
+        --pull
+        --tag "$BACKEND_IMAGE:$IMAGE_TAG"
+        --tag "$BACKEND_IMAGE:latest"
+        rails_api_template
+
     - docker push "$BACKEND_IMAGE:$IMAGE_TAG"
     - docker push "$BACKEND_IMAGE:latest"
 
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes:
+        - rails_api_template/**/*
+        - .gitlab-ci.yml
 
-build-frontend:
+build_frontend:
   stage: build
 
   script:
-    - echo "Building React frontend image..."
-    - >
-      docker build
-      --pull
-      --build-arg VITE_API_BASE_URL=/api
-      --tag "$FRONTEND_IMAGE:$IMAGE_TAG"
-      --tag "$FRONTEND_IMAGE:latest"
-      ./rails_api_frontend
+    - echo "Building frontend image $FRONTEND_IMAGE:$IMAGE_TAG"
 
-    - echo "Pushing React frontend image..."
+    - docker build
+        --pull
+        --build-arg VITE_API_BASE_URL=/api
+        --tag "$FRONTEND_IMAGE:$IMAGE_TAG"
+        --tag "$FRONTEND_IMAGE:latest"
+        rails_api_frontend
+
     - docker push "$FRONTEND_IMAGE:$IMAGE_TAG"
     - docker push "$FRONTEND_IMAGE:latest"
 
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes:
+        - rails_api_frontend/**/*
+        - .gitlab-ci.yml
+
+update_gitops_manifests:
+  stage: deploy
+  image: alpine:3.22
+
+  before_script:
+    - apk add --no-cache git sed
+    - git config user.name "GitLab CI"
+    - git config user.email "gitlab-ci@$CI_SERVER_HOST"
+
+  script:
+    - echo "Updating Kubernetes manifests to image tag $IMAGE_TAG"
+
+    # Update both backend image references:
+    # 1. database-prepare init container
+    # 2. rails-backend application container
+    - sed -i
+        "s|$BACKEND_IMAGE:[^[:space:]]*|$BACKEND_IMAGE:$IMAGE_TAG|g"
+        clusters/docker-desktop/backend.yaml
+
+    # Update frontend image
+    - sed -i
+        "s|$FRONTEND_IMAGE:[^[:space:]]*|$FRONTEND_IMAGE:$IMAGE_TAG|g"
+        clusters/docker-desktop/frontend.yaml
+
+    - echo "Updated backend images:"
+    - grep "$BACKEND_IMAGE" clusters/docker-desktop/backend.yaml
+
+    - echo "Updated frontend image:"
+    - grep "$FRONTEND_IMAGE" clusters/docker-desktop/frontend.yaml
+
+    - git add
+        clusters/docker-desktop/backend.yaml
+        clusters/docker-desktop/frontend.yaml
+
+    - |
+      if git diff --cached --quiet; then
+        echo "No manifest changes required."
+        exit 0
+      fi
+
+    - git commit -m "Deploy images $IMAGE_TAG [skip ci]"
+
+    - git remote set-url origin
+        "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+
+    - git push origin
+        "HEAD:${CI_DEFAULT_BRANCH}"
+
+  needs:
+    - job: build_backend
+      optional: true
+    - job: build_frontend
+      optional: true
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes:
+        - rails_api_template/**/*
+        - rails_api_frontend/**/*
+        - .gitlab-ci.yml
