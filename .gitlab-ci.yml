@@ -6,6 +6,9 @@ variables:
   FRONTEND_IMAGE: "$CI_REGISTRY_IMAGE/frontend"
   IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
 
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+
 default:
   image: docker:27.5.1
 
@@ -13,12 +16,9 @@ default:
     - name: docker:27.5.1-dind
       alias: docker
 
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" |
+    - >
+      echo "$CI_REGISTRY_PASSWORD" |
       docker login "$CI_REGISTRY"
       --username "$CI_REGISTRY_USER"
       --password-stdin
@@ -27,14 +27,15 @@ build-backend:
   stage: build
 
   script:
-    - echo "Building Rails backend..."
-    - docker build
+    - echo "Building Rails backend image..."
+    - >
+      docker build
       --pull
       --tag "$BACKEND_IMAGE:$IMAGE_TAG"
       --tag "$BACKEND_IMAGE:latest"
       ./rails_api_template
 
-    - echo "Pushing Rails backend..."
+    - echo "Pushing Rails backend image..."
     - docker push "$BACKEND_IMAGE:$IMAGE_TAG"
     - docker push "$BACKEND_IMAGE:latest"
 
@@ -45,15 +46,16 @@ build-frontend:
   stage: build
 
   script:
-    - echo "Building React frontend..."
-    - docker build
+    - echo "Building React frontend image..."
+    - >
+      docker build
       --pull
       --build-arg VITE_API_BASE_URL=/api
       --tag "$FRONTEND_IMAGE:$IMAGE_TAG"
       --tag "$FRONTEND_IMAGE:latest"
       ./rails_api_frontend
 
-    - echo "Pushing React frontend..."
+    - echo "Pushing React frontend image..."
     - docker push "$FRONTEND_IMAGE:$IMAGE_TAG"
     - docker push "$FRONTEND_IMAGE:latest"
 
