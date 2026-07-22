@@ -1,0 +1,61 @@
+stages:
+  - build
+
+variables:
+  BACKEND_IMAGE: "$CI_REGISTRY_IMAGE/backend"
+  FRONTEND_IMAGE: "$CI_REGISTRY_IMAGE/frontend"
+  IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+
+default:
+  image: docker:27.5.1
+
+  services:
+    - name: docker:27.5.1-dind
+      alias: docker
+
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" |
+      docker login "$CI_REGISTRY"
+      --username "$CI_REGISTRY_USER"
+      --password-stdin
+
+build-backend:
+  stage: build
+
+  script:
+    - echo "Building Rails backend..."
+    - docker build
+      --pull
+      --tag "$BACKEND_IMAGE:$IMAGE_TAG"
+      --tag "$BACKEND_IMAGE:latest"
+      ./rails_api_template
+
+    - echo "Pushing Rails backend..."
+    - docker push "$BACKEND_IMAGE:$IMAGE_TAG"
+    - docker push "$BACKEND_IMAGE:latest"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+build-frontend:
+  stage: build
+
+  script:
+    - echo "Building React frontend..."
+    - docker build
+      --pull
+      --build-arg VITE_API_BASE_URL=/api
+      --tag "$FRONTEND_IMAGE:$IMAGE_TAG"
+      --tag "$FRONTEND_IMAGE:latest"
+      ./rails_api_frontend
+
+    - echo "Pushing React frontend..."
+    - docker push "$FRONTEND_IMAGE:$IMAGE_TAG"
+    - docker push "$FRONTEND_IMAGE:latest"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
