@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: rails-frontend
-          image: harshparmar009/rails-task-frontend:v4
+          image: harshparmar009/rails-task-frontend:v5
           imagePullPolicy: Always
           ports:
             - containerPort: 80
