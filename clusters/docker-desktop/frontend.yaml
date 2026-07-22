@@ -22,7 +22,7 @@ spec:
 
       containers:
         - name: rails-frontend
-          image: registry.gitlab.com/harshparmar009/ruby-on-rails/frontend:e4190c56
+          image: registry.gitlab.com/harshparmar009/ruby-on-rails/frontend:ffc99e2a
           imagePullPolicy: Always
 
           ports:

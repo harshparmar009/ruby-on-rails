@@ -22,7 +22,7 @@ spec:
 
       initContainers:
         - name: database-prepare
-          image: registry.gitlab.com/harshparmar009/ruby-on-rails/backend:e4190c56
+          image: registry.gitlab.com/harshparmar009/ruby-on-rails/backend:ffc99e2a
           imagePullPolicy: Always
 
           command:
@@ -63,7 +63,7 @@ spec:
 
       containers:
         - name: rails-backend
-          image: registry.gitlab.com/harshparmar009/ruby-on-rails/backend:e4190c56
+          image: registry.gitlab.com/harshparmar009/ruby-on-rails/backend:ffc99e2a
           imagePullPolicy: Always
 
           ports:
