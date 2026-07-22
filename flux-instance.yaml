@@ -3,6 +3,7 @@ kind: FluxInstance
 metadata:
   name: flux
   namespace: flux-system
+
 spec:
   distribution:
     version: "2.8.x"
@@ -19,6 +20,8 @@ spec:
 
   sync:
     kind: GitRepository
-    url: "https://github.com/harshparmar009/ruby-on-rails.git"
+    url: "https://gitlab.com/harshparmar009/ruby-on-rails.git"
     ref: "refs/heads/main"
     path: "clusters/docker-desktop"
+    pullSecret: "gitlab-git-auth"
+    interval: "1m"
